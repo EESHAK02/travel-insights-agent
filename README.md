@@ -1,12 +1,14 @@
 # 🗺️ Travel Insights Agent
 
-An interactive chat agent for exploring hotel booking analytics. Ask questions in plain English — the agent converts them to SQL, queries Snowflake, and returns a conversational answer. Trend questions automatically render a Chart.js line chart.
+An interactive chat agent for exploring hotel booking analytics. Ask questions in plain English - the agent converts them to SQL, queries Snowflake, and returns a conversational answer. Trend questions automatically render a Chart.js line chart.
 
 ---
-
 ## Demo
 
-Check out how the app works - [Demo Link](https://github.com/EESHAK02/travel-insights-agent/blob/main/demo_video.mp4)
+> URL: [Chat with my agent here](https://travel-insights-agent.onrender.com)
+- Note : No login required, may take a minute to wake up (Render free tier limits on inactivity)
+
+> A quick demo video - [Demo Link](https://github.com/EESHAK02/travel-insights-agent/blob/main/demo_video.mp4)
 
 ---
 ## Stack
@@ -77,20 +79,30 @@ Insights that internal teams can check for:
 ## Evaluation
 
 ```bash
-python eval.py                                        # local
-python eval.py --skip-judge                           # rule checks only
+python eval.py                                                     # local
+python eval.py --url https://travel-insights-agent.onrender.com/   # deployed
+python eval.py --skip-judge                                        # rule checks only
 ```
 
-14 test cases: 10 valid analytics questions + 4 guardrail tests.
-Extra check: time-series questions verified to trigger `chart_type=line`.
+14 test cases: 10 valid analytics questions + 4 guardrail tests - all checks passed. 
+Extra check for visualizations: time-series questions verified to trigger `chart_type=line`. 
 
 ---
 
 ## Monitoring
 
-Every query logged to `query_log.jsonl`.
+Every query logged to `query_log.jsonl`. For the deployed version, queries can be monitored at `/logs` on the live URL.
 
 ---
+
+## Future Improvements
+
+- **Cross-model eval judge** - use Gemini/GPT-4 instead of same model to avoid self-evaluation bias
+- **Date range filter** - UI toggle to filter to 2015 / 2016 / 2017 separately
+- **Streaming responses** - token-by-token streaming instead of waiting for full response
+- **Session persistence** - save conversation to localStorage so refresh doesn't lose context
+
+--- 
 
 ## Local Development
 
@@ -106,9 +118,16 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## Future Improvements
+## Deploy to Render
 
-- **Cross-model eval judge** - use Gemini/GPT-4 instead of same model to avoid self-evaluation bias
-- **Date range filter** - UI toggle to filter to 2015 / 2016 / 2017 separately
-- **Streaming responses** - token-by-token streaming instead of waiting for full response
-- **Session persistence** - save conversation to localStorage so refresh doesn't lose context
+1. Push this repo to GitHub (make sure `.env` is in `.gitignore`)
+2. Go to [render.com](https://render.com) - **New Web Service**
+3. Connect GitHub repo
+4. Settings:
+   - **Runtime:** Python 3
+   - **Build command:** `pip install -r requirements.txt`
+   - **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. Add **Environment Variables** (from `.env` file and Python version 3.11.0) in Render's dashboard
+6. Deploy to get a public url
+
+---
