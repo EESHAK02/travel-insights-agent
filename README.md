@@ -38,7 +38,7 @@ Loaded into Snowflake as: `"BOOKINGS"."PUBLIC"."INFO"`
 - **Cancellations:** "Which market segment cancels the most?" / "Does lead time affect cancellations?"
 - **Pricing:** "What is the average daily rate by hotel type?" / "How has ADR changed by year?"
 - **Segments:** "How does Direct compare to Online TA in cancellation rate?"
-- **Seasonality:** "How do bookings trend by month?" ← auto-renders a line chart
+- **Seasonality:** "How do bookings trend by month?" 
 - **Geography:** "Which countries book the most?"
 - **Guest behaviour:** "What percentage of guests are repeat visitors?"
 
@@ -84,7 +84,7 @@ python eval.py --url https://travel-insights-agent.onrender.com/   # deployed
 python eval.py --skip-judge                                        # rule checks only
 ```
 
-14 test cases: 10 valid analytics questions + 4 guardrail tests - all checks passed. 
+8 test cases: 5 valid analytics questions + 3 guardrail tests - all checks passed. 
 Extra check for visualizations: time-series questions verified to trigger `chart_type=line`. 
 
 ---
