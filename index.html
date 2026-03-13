@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Insights Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0f0f;
+    --paper: #f0f4f8;
+    --cream: #e2e8f0;
+    --red: #c0392b;
+    --blue: #1a3a5c;
+    --teal: #0d6e6e;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --white: #fff;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  /* Header */
+  header {
+    padding: 1.5rem 0 1rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .header-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .header-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Messages */
+  .messages {
+    overflow-y: auto;
+    padding: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    scroll-behavior: smooth;
+  }
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Welcome */
+  .welcome {
+    margin: auto 0;
+    padding: 2rem 0;
+  }
+  .welcome h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    line-height: 1.2;
+    color: var(--teal);
+    margin-bottom: 0.75rem;
+  }
+  .welcome p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 540px;
+    margin-bottom: 1.5rem;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .chip {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chip:hover { background: var(--teal); color: var(--white); border-color: var(--teal); }
+
+  /* Messages */
+  .msg {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    animation: fadeUp 0.25s ease forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; flex-shrink: 0;
+    font-family: 'DM Mono', monospace; font-weight: 500;
+  }
+  .avatar.agent { background: var(--teal); color: var(--white); }
+  .avatar.user  { background: var(--ink); color: var(--white); }
+
+  .bubble {
+    max-width: 78%;
+    padding: 0.75rem 1rem;
+    border-radius: 2px;
+    line-height: 1.6;
+    font-size: 0.9rem;
+  }
+  .msg.agent .bubble { background: var(--white); border: 1px solid var(--border); border-top-left-radius: 0; }
+  .msg.user  .bubble { background: var(--teal); color: var(--white); border-top-right-radius: 0; }
+  .msg.error  .bubble { background: #fdf0ee; border-color: #e8b4ae; color: var(--red); }
+  .msg.reject .bubble { background: #fdf5e6; border-color: #e8d9b4; color: #7a5a1a; }
+
+  /* Data table */
+  .data-table-wrap {
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: 'DM Mono', monospace; }
+  th {
+    background: var(--cream); padding: 0.4rem 0.75rem;
+    text-align: left; font-weight: 500; border-bottom: 1px solid var(--border);
+    white-space: nowrap; color: var(--teal); letter-spacing: 0.03em;
+    font-size: 0.72rem; text-transform: uppercase;
+  }
+  td { padding: 0.35rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--ink); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--cream); }
+
+  /* Chart */
+  .chart-wrap {
+    margin-top: 0.75rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1rem;
+  }
+  .chart-wrap canvas { max-height: 260px; }
+  .chart-toggle {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    user-select: none;
+  }
+  .chart-toggle:hover { color: var(--teal); }
+
+  /* SQL disclosure */
+  .sql-toggle {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    user-select: none;
+  }
+  .sql-toggle:hover { color: var(--teal); }
+  .sql-block {
+    display: none;
+    margin-top: 0.4rem;
+    background: #0f1923;
+    color: #7dd3c8;
+    padding: 0.75rem;
+    border-radius: 2px;
+    font-size: 0.73rem;
+    font-family: 'DM Mono', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  .sql-block.open { display: block; }
+
+  /* Typing indicator */
+  .typing .bubble { display: flex; gap: 4px; align-items: center; padding: 0.9rem 1rem; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40%            { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input area */
+  .input-area { padding: 1rem 0 1.5rem; border-top: 1px solid var(--border); }
+  .input-row {
+    display: flex; gap: 0.5rem;
+    background: var(--white);
+    border: 1.5px solid var(--ink);
+    border-radius: 2px;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    transition: border-color 0.15s;
+  }
+  .input-row:focus-within { border-color: var(--teal); }
+  textarea {
+    flex: 1; border: none; outline: none; resize: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; color: var(--ink);
+    line-height: 1.5; max-height: 120px; min-height: 24px; overflow-y: auto;
+  }
+  textarea::placeholder { color: var(--muted); }
+  .send-btn {
+    background: var(--ink); color: var(--white);
+    border: none; border-radius: 2px;
+    width: 36px; height: 36px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s; flex-shrink: 0; align-self: flex-end;
+  }
+  .send-btn:hover:not(:disabled) { background: var(--teal); }
+  .send-btn:disabled { background: var(--border); cursor: not-allowed; }
+  .send-btn svg { width: 16px; height: 16px; }
+  .input-hint { font-size: 0.7rem; color: var(--muted); margin-top: 0.4rem; font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <span class="header-icon">🗺️</span>
+    <span class="header-title">Travel Insights Agent</span>
+    <span class="header-sub">Hotel Bookings Data</span>
+  </header>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <h2>Ask anything about<br><em>hotel bookings.</em></h2>
+      <p>Powered by real hotel booking data. Explore cancellations, pricing, market segments, seasonality, and guest behaviour.</p>
+      <div class="chips">
+        <span class="chip" onclick="ask(this.textContent)">What is the overall cancellation rate?</span>
+        <span class="chip" onclick="ask(this.textContent)">Which market segment cancels the most?</span>
+        <span class="chip" onclick="ask(this.textContent)">How do bookings trend by month?</span>
+        <span class="chip" onclick="ask(this.textContent)">Does lead time affect cancellations?</span>
+        <span class="chip" onclick="ask(this.textContent)">Average daily rate by hotel type?</span>
+        <span class="chip" onclick="ask(this.textContent)">Which countries book the most?</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea
+        id="input"
+        placeholder="Ask about cancellations, pricing, seasonality, segments…"
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+  </div>
+
+</div>
+
+<script>
+  const API = '';
+  let history = [];
+  let loading = false;
+  let chartCounter = 0;
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('input');
+  const sendBtn    = document.getElementById('sendBtn');
+  const welcomeEl  = document.getElementById('welcome');
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function scrollBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+  function ask(text) { inputEl.value = text; sendMessage(); }
+
+  function appendMessage(role, html, extra) {
+    if (welcomeEl && welcomeEl.parentNode) welcomeEl.remove();
+
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role}`;
+
+    const av = document.createElement('div');
+    av.className = `avatar ${role === 'user' ? 'user' : 'agent'}`;
+    av.textContent = role === 'user' ? 'YOU' : 'TIA';
+
+    const bub = document.createElement('div');
+    bub.className = 'bubble';
+    bub.innerHTML = html;
+
+    // Chart (for time-series / trend queries)
+    if (extra?.chart && extra.chart.type !== 'none' && extra.chart.rows?.length > 1) {
+      bub.appendChild(buildChart(extra.chart));
+    }
+    // Data table (for non-chart or as toggle)
+    else if (extra?.table) {
+      bub.appendChild(buildTable(extra.table.rows, extra.table.cols));
+    }
+
+    // SQL disclosure
+    if (extra?.sql) {
+      const tog = document.createElement('div');
+      tog.className = 'sql-toggle';
+      tog.innerHTML = `<span>▶</span> view SQL`;
+      const blk = document.createElement('pre');
+      blk.className = 'sql-block';
+      blk.textContent = extra.sql;
+      tog.onclick = () => {
+        blk.classList.toggle('open');
+        tog.querySelector('span').textContent = blk.classList.contains('open') ? '▼' : '▶';
+      };
+      bub.appendChild(tog);
+      bub.appendChild(blk);
+    }
+
+    wrap.appendChild(av);
+    wrap.appendChild(bub);
+    messagesEl.appendChild(wrap);
+    scrollBottom();
+    return wrap;
+  }
+
+  function buildChart(chartData) {
+    const { type, rows, cols } = chartData;
+    if (!rows || rows.length === 0) return document.createTextNode('');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-wrap';
+
+    const canvas = document.createElement('canvas');
+    const chartId = `chart-${++chartCounter}`;
+    canvas.id = chartId;
+    wrap.appendChild(canvas);
+
+    // Extract labels (first col) and values (second col)
+    // For monthly data, filter out the month_num helper column
+    let labelIdx = 0;
+    let valueIdx = 1;
+    // If there's a month_num column, skip it
+    const monthNumIdx = cols.findIndex(c => c.toLowerCase() === 'month_num');
+
+    const labels = rows.map(r => String(r[labelIdx]));
+    const values = rows.map(r => {
+      // Find first numeric column that isn't month_num
+      for (let i = 1; i < r.length; i++) {
+        if (i === monthNumIdx) continue;
+        if (typeof r[i] === 'number') return r[i];
+      }
+      return r[valueIdx];
+    });
+
+    const valueLabel = cols.filter((c, i) => i !== 0 && i !== monthNumIdx)[0] || cols[1] || 'value';
+
+    // Render after DOM insertion
+    requestAnimationFrame(() => {
+      new Chart(canvas, {
+        type: type === 'line' ? 'line' : 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: valueLabel.replace(/_/g, ' '),
+            data: values,
+            backgroundColor: type === 'bar' ? 'rgba(13, 110, 110, 0.7)' : 'rgba(13, 110, 110, 0.15)',
+            borderColor: '#0d6e6e',
+            borderWidth: type === 'line' ? 2 : 1,
+            fill: type === 'line',
+            tension: 0.3,
+            pointBackgroundColor: '#0d6e6e',
+            pointRadius: type === 'line' ? 4 : 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed.y;
+                  return typeof v === 'number' ? v.toLocaleString() : v;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { font: { family: "'DM Mono', monospace", size: 11 }, color: '#64748b' },
+              grid: { display: false }
+            },
+            y: {
+              ticks: { font: { family: "'DM Mono', monospace", size: 11 }, color: '#64748b' },
+              grid: { color: '#e2e8f0' },
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    });
+
+    // Also add a table toggle below the chart
+    if (rows.length > 0) {
+      const tableContainer = document.createElement('div');
+      tableContainer.style.display = 'none';
+      tableContainer.appendChild(buildTable(rows, cols.filter((_, i) => i !== monthNumIdx)));
+
+      const toggleBtn = document.createElement('div');
+      toggleBtn.className = 'chart-toggle';
+      toggleBtn.innerHTML = `<span>⊞</span> view table`;
+      toggleBtn.onclick = () => {
+        const shown = tableContainer.style.display !== 'none';
+        tableContainer.style.display = shown ? 'none' : 'block';
+        toggleBtn.innerHTML = shown ? `<span>⊞</span> view table` : `<span>⊟</span> hide table`;
+      };
+      wrap.appendChild(toggleBtn);
+      wrap.appendChild(tableContainer);
+    }
+
+    return wrap;
+  }
+
+  function buildTable(rows, cols) {
+    if (!rows || rows.length === 0) return document.createTextNode('');
+    const wrap = document.createElement('div');
+    wrap.className = 'data-table-wrap';
+    const t = document.createElement('table');
+    const thead = t.createTHead();
+    const hrow = thead.insertRow();
+    cols.forEach(c => {
+      const th = document.createElement('th');
+      th.textContent = c.replace(/_/g, ' ');
+      hrow.appendChild(th);
+    });
+    const tbody = t.createTBody();
+    rows.forEach(r => {
+      const tr = tbody.insertRow();
+      r.forEach(v => {
+        const td = tr.insertCell();
+        td.textContent = typeof v === 'number' ? v.toLocaleString() : (v ?? '—');
+      });
+    });
+    wrap.appendChild(t);
+    return wrap;
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg agent typing';
+    wrap.id = 'typing';
+    wrap.innerHTML = `<div class="avatar agent">TIA</div>
+      <div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    messagesEl.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() { document.getElementById('typing')?.remove(); }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || loading) return;
+
+    loading = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    appendMessage('user', escHtml(text));
+    showTyping();
+
+    try {
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (data.type === 'reject') {
+        appendMessage('reject', `⚠️ ${escHtml(data.message)}`);
+      } else if (data.type === 'error') {
+        appendMessage('error', `❌ ${escHtml(data.message)}`);
+      } else {
+        const chartType = data.chart_type || 'none';
+        const isChart = chartType !== 'none' && data.rows?.length > 1;
+        const showTable = !isChart && data.rows && (data.rows.length > 1 || data.columns?.length > 2);
+
+        appendMessage('agent', escHtml(data.message), {
+          chart: isChart ? { type: chartType, rows: data.rows, cols: data.columns } : null,
+          table: showTable ? { rows: data.rows, cols: data.columns } : null,
+          sql: data.sql,
+        });
+
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: data.message });
+        if (history.length > 12) history = history.slice(-12);
+      }
+    } catch (err) {
+      removeTyping();
+      appendMessage('error', '❌ Network error — is the server running?');
+    }
+
+    loading = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  inputEl.focus();
+</script>
+</body>
+</html>

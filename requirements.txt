@@ -1,0 +1,8 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+groq>=0.9.0
+snowflake-connector-python==3.12.2
+pandas
+python-dotenv==1.0.1
+pydantic==2.8.2
+httpx>=0.27.0
