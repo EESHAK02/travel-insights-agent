@@ -60,7 +60,7 @@ User asks question
 
 ## Key Insights the Agent Can Surface
 
-Key internal insights:
+Insights that internal teams can check for:
 
 1. **OTA vs Direct cancellation gap** - Core revenue leakage problem for OTAs.
 2. **Lead time risk** - Bookings made 180+ days in advance cancel at ~50%+. Short lead time bookings are far more reliable.
@@ -100,19 +100,6 @@ uvicorn main:app --reload --port 8000
 ```
 
 ---
-
-## Deploy to Render
-
-1. Push repo to GitHub (confirm `.env` is in `.gitignore`)
-2. Render - New Web Service - connect repo
-3. Settings:
-   - **Runtime:** Python 3
-   - **Build command:** `pip install -r requirements.txt`
-   - **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variables from `.env.example` + `PYTHON_VERSION=3.11.0`
-5. Deploy
-
-
 
 ## Future Improvements
 
