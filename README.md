@@ -7,6 +7,7 @@ An interactive chat agent for exploring hotel booking analytics. Ask questions i
 ## Demo
 
 Check out how the app works - [Demo Link](https://github.com/EESHAK02/travel-insights-agent/blob/main/demo_video.mp4)
+
 ---
 ## Stack
 
